@@ -21,6 +21,9 @@ esac done
 
 # DEFAULTS:
 [ -z ${dotfilesrepo+x} ] && dotfilesrepo="https://github.com/und3rdg/dot_voidrice.git"
+[ -z ${vimfilesrepo+x} ] && vimfilesrepo="https://github.com/und3rdg/.vim.git"
+[ -z ${zshfilesrepo+x} ] && zshfilesrepo="https://github.com/und3rdg/zsh.git"
+
 [ -z ${progsfile+x} ] && progsfile="https://raw.githubusercontent.com/und3rdg/dot_LARBS/master/progs.csv"
 [ -z ${aurhelper+x} ] && aurhelper="yay"
 
@@ -75,7 +78,7 @@ adduserandpass() { \
 gitmakeinstall() {
 	dir=$(mktemp -d)
 	dialog --title "LARBS Installation" --infobox "Installing \`$(basename "$1")\` ($n of $total) via \`git\` and \`make\`. $(basename "$1") $2" 5 70
-	git clone --depth 1 "$1" "$dir" &>/dev/null
+	git clone --depth --recurse-submodules 1 "$1" "$dir" &>/dev/null
 	cd "$dir" || exit
 	make &>/dev/null
 	make install &>/dev/null
@@ -127,7 +130,28 @@ putgitrepo() { # Downlods a gitrepo $1 and places the files in $2 only overwriti
 	sudo -u "$name" git clone --depth 1 "$1" "$dir"/gitrepo &>/dev/null &&
 	sudo -u "$name" mkdir -p "$2" &&
 	sudo -u "$name" cp -rT "$dir"/gitrepo "$2"
-	}
+}
+
+git_clone() {
+  sudo -u "$name" git clone "$1" "$2" &>/dev/null
+}
+
+install_vim(){ // install plugins, compile ycm, install tern from npm
+  dialog --infobox "Installing vim plugins..." 4 50
+  sudo -u "$name" vim -E -c "PlugUpdate|visual|q|q" 
+
+  dialog --infobox "[vim] YouCompleteMe update git sunbomules..." 4 50
+  cd "/home/$name/.vim/plugged/YouCompleteMe"
+  sudo -u "$name" git submodule update --init --recursive >/dev/null
+
+  dialog --infobox "[vim] YouCompleteMe: compilation..." 4 50
+  sudo -u "$name" ./install.py  
+
+  dialog --infobox "[vim] Tern project: npm install..." 4 50
+  cd "third_party/ycmd/third_party/tern_runtime" >/dev/null
+  sudo -u "$name" npm install >/dev/null
+  cd "/home/$name" >/dev/null
+}
 
 resetpulse() { dialog --infobox "Reseting Pulseaudio..." 4 50
 	killall pulseaudio
@@ -148,7 +172,7 @@ finalize(){ \
 	dialog --infobox "Preparing welcome message..." 4 50
 	echo "exec_always --no-startup-id notify-send -i ~/.scripts/pix/larbs.png '<b>Welcome to LARBS:</b> Press Super+F1 for the manual.' -t 10000"  >> "/home/$name/.config/i3/config"
 	dialog --title "All done!" --msgbox "Congrats! Provided there were no hidden errors, the script completed successfully and all the programs and configuration files should be in place.\\n\\nTo run the new graphical environment, log out and log back in as your new user, then run the command \"startx\" to start the graphical environment (it will start automatically in tty1).\\n\\n.t Luke" 12 80
-	}
+}
 
 ###
 ### THE ACTUAL SCRIPT ###
@@ -193,18 +217,22 @@ manualinstall $aurhelper
 # and all build dependencies are installed.
 installationloop
 
+# set zsh as default shell
+usermod -s /bin/zsh "$name" &/>dev/null
+
 # Install the dotfiles in the user's home directory
 putgitrepo "$dotfilesrepo" "/home/$name"
+git_clone "$vimfilesrepo" "/home/$name/.vim"
+git_clone "$zshfilesrepo" "/home/$name/.zprezto"
 
 # Install the LARBS Firefox profile in ~/.mozilla/firefox/
-putgitrepo "https://github.com/LukeSmithxyz/mozillarbs.git" "/home/$name/.mozilla/firefox"
+# putgitrepo "https://github.com/LukeSmithxyz/mozillarbs.git" "/home/$name/.mozilla/firefox"
 
 # Pulseaudio, if/when initially installed, often needs a restart to work immediately.
 [[ -f /usr/bin/pulseaudio ]] && resetpulse
 
 # Install vim `plugged` plugins.
-dialog --infobox "Installing vim plugins..." 4 50
-sudo -u "$name" vim -E -c "PlugUpdate|visual|q|q" >/dev/null
+install_vim
 
 # Enable services here.
 serviceinit NetworkManager cronie
