@@ -26,6 +26,7 @@ esac done
 
 [ -z ${progsfile+x} ] && progsfile="https://raw.githubusercontent.com/und3rdg/dot_LARBS/master/progs.csv"
 [ -z ${aurhelper+x} ] && aurhelper="yay"
+install_date=$(date +%Y_%m_%d-%H_%M_%S)
 
 ###
 ### FUNCTIONS ###
@@ -72,6 +73,8 @@ adduserandpass() { \
 	dialog --infobox "Adding user \"$name\"..." 4 50
 	useradd -m -g wheel -s /bin/bash "$name" &>/dev/null ||
 	usermod -a -G wheel "$name" && mkdir -p /home/"$name" && chown "$name":wheel /home/"$name"
+  usermod -s /bin/zsh "$name" &/>dev/null
+
 	echo "$name:$pass1" | chpasswd
 	unset pass1 pass2 ;}
 
@@ -129,14 +132,25 @@ putgitrepo() { # Downlods a gitrepo $1 and places the files in $2 only overwriti
 	chown -R "$name":wheel "$dir"
 	sudo -u "$name" git clone --depth 1 "$1" "$dir"/gitrepo &>/dev/null &&
 	sudo -u "$name" mkdir -p "$2" &&
-	sudo -u "$name" cp -rT "$dir"/gitrepo "$2"
+  [ -d $2/.git ] && chown -R "$name":wheel "$2/.git/"
+	cp -rT "$dir"/gitrepo "$2"
 }
 
 git_clone() {
-  sudo -u "$name" git clone "$1" "$2" &>/dev/null
+  if [ -d "$2" ]; then
+	dialog --infobox "Backup old $date_folder..." 4 80
+    chown -R "$name":wheel "$2"
+    chown -R "$name":wheel "$2/.git"
+    date_folder="/home/$name/old_backup/$install_date"
+    sudo -u "$name" mkdir -p "$date_folder"
+    sudo -u "$name" mv "$2" "$date_folder"
+  fi
+  sudo -u "$name" git clone "$1" "$2" &>/dev/null &&
+  chown -R "$name":wheel "$2/.git/"
 }
 
-install_vim(){ // install plugins, compile ycm, install tern from npm
+#install plugins, compile ycm, install tern from npm
+install_vim(){ 
   dialog --infobox "Installing vim plugins..." 4 50
   sudo -u "$name" vim -E -c "PlugUpdate|visual|q|q" 
 
@@ -181,6 +195,7 @@ finalize(){ \
 ###
 
 # Check if user is root on Arch distro. Install dialog.
+
 initialcheck
 
 # Welcome user.
@@ -216,9 +231,6 @@ manualinstall $aurhelper
 # the user has been created and has priviledges to run sudo without a password
 # and all build dependencies are installed.
 installationloop
-
-# set zsh as default shell
-usermod -s /bin/zsh "$name" &/>dev/null
 
 # Install the dotfiles in the user's home directory
 putgitrepo "$dotfilesrepo" "/home/$name"
