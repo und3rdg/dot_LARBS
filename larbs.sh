@@ -21,9 +21,10 @@ esac done
 
 # DEFAULTS:
 [ -z ${dotfilesrepo+x} ] && dotfilesrepo="https://github.com/und3rdg/dot_base.git"
-[ -z ${vimfilesrepo+x} ] && vimfilesrepo="https://github.com/und3rdg/.vim.git"
-[ -z ${zshfilesrepo+x} ] && zshfilesrepo="https://github.com/und3rdg/zsh.git"
+[ -z ${vimfilesrepo+x} ] && vimfilesrepo="https://github.com/und3rdg/dot_vim.git"
+[ -z ${zshfilesrepo+x} ] && zshfilesrepo="https://github.com/und3rdg/dot_shell.git"
 [ -z ${i3filesrepo+x}  ] && i3filesrepo="https://github.com/und3rdg/dot_i3.git"
+[ -z ${wikifilesrepo+x}  ] && wikifilesrepo="https://github.com/und3rdg/dot_vimwiki.git"
 
 [ -z ${progsfile+x} ] && progsfile="https://raw.githubusercontent.com/und3rdg/dot_install/master/progs.csv"
 [ -z ${aurhelper+x} ] && aurhelper="yay"
@@ -136,7 +137,7 @@ putgitrepo() {
 	sudo -u "$name" git clone --depth 1 "$1" "$dir"/gitrepo &>/dev/null &&
 	sudo -u "$name" mkdir -p "$2" &&
   [ -d $2/.git ] && chown -R "$name":wheel "$2/.git/"
-	cp -rT "$dir"/gitrepo "$2"
+	sudo -u "$name" cp -rT "$dir"/gitrepo "$2"
 }
 
 git_clone() {
@@ -238,7 +239,8 @@ installationloop
 putgitrepo "$dotfilesrepo" "/home/$name"
 git_clone "$vimfilesrepo" "/home/$name/.vim"
 git_clone "$zshfilesrepo" "/home/$name/.zprezto"
-# git_clone "$i3filesrepo" "/home/$name/.config/i3"
+git_clone "$i3filesrepo" "/home/$name/.config/i3"
+git_clone "$wikifilesrepo" "/home/$name/vimwiki"
 
 # Install the LARBS Firefox profile in ~/.mozilla/firefox/
 # putgitrepo "https://github.com/LukeSmithxyz/mozillarbs.git" "/home/$name/.mozilla/firefox"
