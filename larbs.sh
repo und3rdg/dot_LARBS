@@ -20,12 +20,14 @@ while getopts ":a:r:p:h" o; do case "${o}" in
 esac done
 
 # DEFAULTS:
-[ -z ${dotfilesrepo+x} ] && dotfilesrepo="https://github.com/und3rdg/dot_voidrice.git"
+[ -z ${dotfilesrepo+x} ] && dotfilesrepo="https://github.com/und3rdg/dot_init.git"
 [ -z ${vimfilesrepo+x} ] && vimfilesrepo="https://github.com/und3rdg/.vim.git"
 [ -z ${zshfilesrepo+x} ] && zshfilesrepo="https://github.com/und3rdg/zsh.git"
+[ -z ${i3filesrepo+x}  ] && i3filesrepo="https://github.com/und3rdg/dot_i3.git"
 
-[ -z ${progsfile+x} ] && progsfile="https://raw.githubusercontent.com/und3rdg/dot_LARBS/master/progs.csv"
+[ -z ${progsfile+x} ] && progsfile="https://raw.githubusercontent.com/und3rdg/dot_install/master/progs.csv"
 [ -z ${aurhelper+x} ] && aurhelper="yay"
+
 install_date=$(date +%Y_%m_%d-%H_%M_%S)
 
 ###
@@ -126,7 +128,8 @@ systembeepoff() { dialog --infobox "Getting rid of that retarded error beep soun
 	rmmod pcspkr
 	echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf ;}
 
-putgitrepo() { # Downlods a gitrepo $1 and places the files in $2 only overwriting conflicts
+# Downlods a gitrepo $1 and places the files in $2 only overwriting conflicts
+putgitrepo() {
 	dialog --infobox "Downloading and installing config files..." 4 60
 	dir=$(mktemp -d)
 	chown -R "$name":wheel "$dir"
@@ -137,11 +140,12 @@ putgitrepo() { # Downlods a gitrepo $1 and places the files in $2 only overwriti
 }
 
 git_clone() {
-  if [ -d "$2" ]; then
-	dialog --infobox "Backup old $date_folder..." 4 80
+  date_folder="/home/$name/old_backup/$install_date"
+  ls -a "/home/$name"
+  if [ -d "$2" ] ; then
+    dialog --infobox "$2 || Backup old $date_folder..." 4 80
     chown -R "$name":wheel "$2"
-    chown -R "$name":wheel "$2/.git"
-    date_folder="/home/$name/old_backup/$install_date"
+    [ -d "$2/.git" ] && chown -R "$name":wheel "$2/.git"
     sudo -u "$name" mkdir -p "$date_folder"
     sudo -u "$name" mv "$2" "$date_folder"
   fi
@@ -149,22 +153,22 @@ git_clone() {
   chown -R "$name":wheel "$2/.git/"
 }
 
-#install plugins, compile ycm, install tern from npm
+# Install plugins, compile ycm, install tern from npm
 install_vim(){ 
   dialog --infobox "Installing vim plugins..." 4 50
   sudo -u "$name" vim -E -c "PlugUpdate|visual|q|q" 
 
-  dialog --infobox "[vim] YouCompleteMe update git sunbomules..." 4 50
-  cd "/home/$name/.vim/plugged/YouCompleteMe"
-  sudo -u "$name" git submodule update --init --recursive >/dev/null
+  dialog --infobox "[vim] YouCompleteMe git submodules update..." 4 50
+  cd "/home/$name/.vim/plugged/YouCompleteMe" 
+  sudo -u "$name" git submodule update --init --recursive
 
   dialog --infobox "[vim] YouCompleteMe: compilation..." 4 50
   sudo -u "$name" ./install.py  
 
   dialog --infobox "[vim] Tern project: npm install..." 4 50
-  cd "third_party/ycmd/third_party/tern_runtime" >/dev/null
-  sudo -u "$name" npm install >/dev/null
-  cd "/home/$name" >/dev/null
+  cd "third_party/ycmd/third_party/tern_runtime"
+  sudo -u "$name" npm install &>/dev/null
+  cd "/home/$name"
 }
 
 resetpulse() { dialog --infobox "Reseting Pulseaudio..." 4 50
@@ -195,7 +199,6 @@ finalize(){ \
 ###
 
 # Check if user is root on Arch distro. Install dialog.
-
 initialcheck
 
 # Welcome user.
@@ -236,6 +239,7 @@ installationloop
 putgitrepo "$dotfilesrepo" "/home/$name"
 git_clone "$vimfilesrepo" "/home/$name/.vim"
 git_clone "$zshfilesrepo" "/home/$name/.zprezto"
+# git_clone "$i3filesrepo" "/home/$name/.config/i3"
 
 # Install the LARBS Firefox profile in ~/.mozilla/firefox/
 # putgitrepo "https://github.com/LukeSmithxyz/mozillarbs.git" "/home/$name/.mozilla/firefox"
@@ -261,4 +265,4 @@ sed -i "s/^#Color/Color/g" /etc/pacman.conf
 
 # Last message! Install complete!
 finalize
-clear
+# clear

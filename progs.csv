@@ -70,3 +70,4 @@ G,https://github.com/lukesmithxyz/st.git,"is my custom build of suckless's termi
 ,bat,"cat with colors and git integration."
 ,cmake,"compilator used in YouCompleteMe."
 ,zsh,"who need bash? ZSH FTW!!!"
+A,htop-vim-solarized-git,"htop with vim key bindings."
