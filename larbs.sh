@@ -20,15 +20,16 @@ while getopts ":a:r:p:h" o; do case "${o}" in
 esac done
 
 # DEFAULTS:
-[ -z ${dotfilesrepo+x} ] && dotfilesrepo="https://github.com/und3rdg/dot_base.git"
-[ -z ${vimfilesrepo+x} ] && vimfilesrepo="https://github.com/und3rdg/.vim.git"
-[ -z ${zshfilesrepo+x} ] && zshfilesrepo="https://github.com/und3rdg/zsh.git"
-[ -z ${i3filesrepo+x}  ] && i3filesrepo="https://github.com/und3rdg/dot_i3.git"
+[ -z ${dot_repo+x} ] && dot_repo="https://github.com/und3rdg/dot_base.git"
+[ -z ${vim_repo+x} ] && vim_repo="https://github.com/und3rdg/dot_vim.git"
+[ -z ${zsh_repo+x} ] && zsh_repo="https://github.com/und3rdg/dot_zsh.git"
+[ -z ${i3_repo+x}  ] && i3_repo="https://github.com/und3rdg/dot_i3.git"
+[ -z ${vimwiki_repo+x} ] && vimwiki_repo="https://github.com/und3rdg/dot_vimwiki.git"
 
 [ -z ${progsfile+x} ] && progsfile="https://raw.githubusercontent.com/und3rdg/dot_install/master/progs.csv"
 [ -z ${aurhelper+x} ] && aurhelper="yay"
 
-install_date=$(date +%Y_%m_%d-%H_%M_%S)
+installation_date=$(date +%Y_%m_%d-%H_%M_%S)
 
 ###
 ### FUNCTIONS ###
@@ -129,18 +130,18 @@ systembeepoff() { dialog --infobox "Getting rid of that retarded error beep soun
 	echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf ;}
 
 # Downlods a gitrepo $1 and places the files in $2 only overwriting conflicts
-putgitrepo() {
+git_put() {
 	dialog --infobox "Downloading and installing config files..." 4 60
 	dir=$(mktemp -d)
 	chown -R "$name":wheel "$dir"
 	sudo -u "$name" git clone --depth 1 "$1" "$dir"/gitrepo &>/dev/null &&
 	sudo -u "$name" mkdir -p "$2" &&
   [ -d $2/.git ] && chown -R "$name":wheel "$2/.git/"
-	cp -rT "$dir"/gitrepo "$2"
+	sudo -u "$name" cp -rT "$dir"/gitrepo "$2"
 }
 
 git_clone() {
-  date_folder="/home/$name/old_backup/$install_date"
+  date_folder="/home/$name/old_backup/$installation_date"
   if [ -d "$2" ] ; then
     dialog --infobox "$2 || Backup old $date_folder..." 4 80
     chown -R "$name":wheel "$2"
@@ -235,10 +236,11 @@ manualinstall $aurhelper
 installationloop
 
 # Install the dotfiles in the user's home directory
-putgitrepo "$dotfilesrepo" "/home/$name"
-git_clone "$vimfilesrepo" "/home/$name/.vim"
-git_clone "$zshfilesrepo" "/home/$name/.zprezto"
-# git_clone "$i3filesrepo" "/home/$name/.config/i3"
+git_put    "$dot_repo"     "/ home/$name"
+git_clone  "$vim_repo"     "/ home/$name/.vim"
+git_clone  "$zsh_repo"     "/ home/$name/.zprezto"
+git_clone  "$i3_repo"      "/ home/$name/.config/i3"
+git_clone  "$vimwiki_repo" "/ home/$name/vimwiki"
 
 # Install the LARBS Firefox profile in ~/.mozilla/firefox/
 # putgitrepo "https://github.com/LukeSmithxyz/mozillarbs.git" "/home/$name/.mozilla/firefox"
