@@ -141,7 +141,6 @@ putgitrepo() {
 
 git_clone() {
   date_folder="/home/$name/old_backup/$install_date"
-  ls -a "/home/$name"
   if [ -d "$2" ] ; then
     dialog --infobox "$2 || Backup old $date_folder..." 4 80
     chown -R "$name":wheel "$2"
