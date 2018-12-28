@@ -20,7 +20,7 @@ while getopts ":a:r:p:h" o; do case "${o}" in
 esac done
 
 # DEFAULTS:
-[ -z ${dotfilesrepo+x} ] && dotfilesrepo="https://github.com/und3rdg/dot_init.git"
+[ -z ${dotfilesrepo+x} ] && dotfilesrepo="https://github.com/und3rdg/dot_base.git"
 [ -z ${vimfilesrepo+x} ] && vimfilesrepo="https://github.com/und3rdg/.vim.git"
 [ -z ${zshfilesrepo+x} ] && zshfilesrepo="https://github.com/und3rdg/zsh.git"
 [ -z ${i3filesrepo+x}  ] && i3filesrepo="https://github.com/und3rdg/dot_i3.git"
