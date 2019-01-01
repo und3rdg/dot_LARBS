@@ -32,22 +32,24 @@ install_date=$(date +%Y_%m_%d-%H_%M_%S)
 ### FUNCTIONS ###
 ###
 
-initialcheck() { pacman -Syyu --noconfirm --needed dialog || { echo "Are you sure you're running this as the root user? Are you sure you're using an Arch-based distro? ;-) Are you sure you have an internet connection? Are you sure your Arch keyring is updated?"; exit; } ;}
+initialcheck() {
+  pacman -Syyu --noconfirm --needed dialog || { echo "Are you sure you're running this as the root user? Are you sure you're using an Arch-based distro? ;-) Are you sure you have an internet connection? Are you sure your Arch keyring is updated?"; exit; }
+}
 
-preinstallmsg() { \
-	dialog --title "Let's get this party started!" --yes-label "Let's go!" --no-label "No, nevermind!" --yesno "The rest of the installation will now be totally automated, so you can sit back and relax.\\n\\nIt will take some time, but when done, you can relax even more with your complete system.\\n\\nNow just press <Let's go!> and the system will begin installation!" 13 60 || { clear; exit; }
-	}
+preinstallmsg() {
+  dialog --title "Let's get this party started!" --yes-label "Let's go!" --no-label "No, nevermind!" --yesno "The rest of the installation will now be totally automated, so you can sit back and relax.\\n\\nIt will take some time, but when done, you can relax even more with your complete system.\\n\\nNow just press <Let's go!> and the system will begin installation!" 13 60 || { clear; exit; }
+}
 
-welcomemsg() { \
+welcomemsg() {
 	dialog --title "Welcome!" --msgbox "Welcome to Luke's Auto-Rice Bootstrapping Script!\\n\\nThis script will automatically install a fully-featured i3wm Arch Linux desktop, which I use as my main machine.\\n\\n-Luke" 10 60
-	}
+}
 
-refreshkeys() { \
+refreshkeys() {
 	dialog --infobox "Refreshing Arch Keyring..." 4 40
 	pacman --noconfirm -Sy archlinux-keyring &>/dev/null
-	}
+}
 
-getuserandpass() { \
+getuserandpass() {
 	# Prompts user for new username an password.
 	# Checks if username is valid and confirms passwd.
 	name=$(dialog --inputbox "First, please enter a name for the user account." 10 60 3>&1 1>&2 2>&3 3>&1) || exit
@@ -61,14 +63,15 @@ getuserandpass() { \
 		unset pass2
 		pass1=$(dialog --no-cancel --passwordbox "Passwords do not match.\\n\\nEnter password again." 10 60 3>&1 1>&2 2>&3 3>&1)
 		pass2=$(dialog --no-cancel --passwordbox "Retype password." 10 60 3>&1 1>&2 2>&3 3>&1)
-	done ;}
+	done
+}
 
-usercheck() { \
+usercheck() {
 	! (id -u "$name" &>/dev/null) ||
 	dialog --colors --title "WARNING!" --yes-label "CONTINUE" --no-label "No wait..." --yesno "The user \`$name\` already exists on this system. LARBS can install for a user already existing, but it will \\Zboverwrite\\Zn any conflicting settings/dotfiles on the user account.\\n\\nLARBS will \\Zbnot\\Zn overwrite your user files, documents, videos, etc., so don't worry about that, but only click <CONTINUE> if you don't mind your settings being overwritten.\\n\\nNote also that LARBS will change $name's password to the one you just gave." 14 70
-	}
+}
 
-adduserandpass() { \
+adduserandpass() {
 	# Adds user `$name` with password $pass1.
 	dialog --infobox "Adding user \"$name\"..." 4 50
 	useradd -m -g wheel -s /bin/bash "$name" &>/dev/null ||
@@ -76,7 +79,8 @@ adduserandpass() { \
   usermod -s /bin/zsh "$name" &/>dev/null
 
 	echo "$name:$pass1" | chpasswd
-	unset pass1 pass2 ;}
+	unset pass1 pass2
+}
 
 gitmakeinstall() {
 	dir=$(mktemp -d)
@@ -85,46 +89,54 @@ gitmakeinstall() {
 	cd "$dir" || exit
 	make &>/dev/null
 	make install &>/dev/null
-	cd /tmp || return ;}
+	cd /tmp || return
+}
 
 maininstall() { # Installs all needed programs from main repo.
 	dialog --title "LARBS Installation" --infobox "Installing \`$1\` ($n of $total). $1 $2" 5 70
 	pacman --noconfirm --needed -S "$1" &>/dev/null
-	}
+}
 
-aurinstall() { \
-	dialog --title "LARBS Installation" --infobox "Installing \`$1\` ($n of $total) from the AUR. $1 $2" 5 70
-	grep "^$1$" <<< "$aurinstalled" && return
-	sudo -u "$name" $aurhelper -S --noconfirm "$1" &>/dev/null
-	}
+aurinstall() {
+  dialog --title "LARBS Installation" --infobox "Installing \`$1\` ($n of $total) from the AUR. $1 $2" 5 70
+  grep "^$1$" <<< "$aurinstalled" && return
+  sudo -u "$name" $aurhelper -S --noconfirm "$1" &>/dev/null
+}
 
-installationloop() { \
-	([ -f "$progsfile" ] && cp "$progsfile" /tmp/progs.csv) || curl -Ls "$progsfile" | sed '/^#/d' > /tmp/progs.csv
-	total=$(wc -l < /tmp/progs.csv)
-	aurinstalled=$(pacman -Qm | awk '{print $1}')
-	while IFS=, read -r tag program comment; do
-	n=$((n+1))
-	echo "$comment" | grep "^\".*\"$" >/dev/null && comment="$(echo "$comment" | sed "s/\(^\"\|\"$\)//g")"
-	case "$tag" in
-	"") maininstall "$program" "$comment" ;;
-	"A") aurinstall "$program" "$comment" ;;
-	"G") gitmakeinstall "$program" "$comment" ;;
-	esac
-	done < /tmp/progs.csv ;}
+installationloop() {
+  ([ -f "$progsfile" ] && cp "$progsfile" /tmp/progs.csv) || curl -Ls "$progsfile" | sed '/^#/d' > /tmp/progs.csv
+  total=$(wc -l < /tmp/progs.csv)
+  aurinstalled=$(pacman -Qm | awk '{print $1}')
+  while IFS=, read -r tag program comment; do
+    n=$((n+1))
+    echo "$comment" | grep "^\".*\"$" >/dev/null && comment="$(echo "$comment" | sed "s/\(^\"\|\"$\)//g")"
+    case "$tag" in
+      "") maininstall "$program" "$comment" ;;
+      "A") aurinstall "$program" "$comment" ;;
+      "G") gitmakeinstall "$program" "$comment" ;;
+    esac
+  done < /tmp/progs.csv
+}
 
-serviceinit() { for service in "$@"; do
-	dialog --infobox "Enabling \"$service\"..." 4 40
-	systemctl enable "$service"
-	systemctl start "$service"
-	done ;}
+serviceinit() {
+  for service in "$@"; do
+    dialog --infobox "Enabling \"$service\"..." 4 40
+    systemctl enable "$service"
+    systemctl start "$service"
+  done
+}
 
-newperms() { # Set special sudoers settings for install (or after).
-	sed -i "/#LARBS/d" /etc/sudoers
-	echo -e "$@ #LARBS" >> /etc/sudoers ;}
+# Set special sudoers settings for install (or after).
+newperms() {
+  sed -i "/#LARBS/d" /etc/sudoers
+  echo -e "$@ #LARBS" >> /etc/sudoers
+}
 
-systembeepoff() { dialog --infobox "Getting rid of that retarded error beep sound..." 10 50
+systembeepoff() {
+  dialog --infobox "Getting rid of that retarded error beep sound..." 10 50
 	rmmod pcspkr
-	echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf ;}
+	echo "blacklist pcspkr" > /etc/modprobe.d/nobeep.conf
+}
 
 # Downlods a gitrepo $1 and places the files in $2 only overwriting conflicts
 putgitrepo() {
@@ -147,7 +159,7 @@ git_clone() {
     sudo -u "$name" mv "$2" "$date_folder"
   fi
   sudo -u "$name" git clone "$1" "$2" &>/dev/null &&
-  chown -R "$name":wheel "$2/.git/"
+    chown -R "$name":wheel "$2/.git/"
 }
 
 # Install plugins, compile ycm, install tern from npm
@@ -173,30 +185,31 @@ git_clone_loop() {
 	total=$(wc -l < /tmp/repos.csv)
 	while IFS=, read -r url dest; do
     git_clone "$url" "$1/$dest"
-
-    sleep 5
 	done < /tmp/repos.csv 
 }
 
 resetpulse() { dialog --infobox "Reseting Pulseaudio..." 4 50
 	killall pulseaudio
-	sudo -n "$name" pulseaudio --start ;}
+	sudo -n "$name" pulseaudio --start
+}
 
-manualinstall() { # Installs $1 manually if not installed. Used only for AUR helper here.
-	[[ -f /usr/bin/$1 ]] || (
-	dialog --infobox "Installing \"$1\", an AUR helper..." 4 50
-	cd /tmp || exit
-	rm -rf /tmp/"$1"*
-	curl -sO https://aur.archlinux.org/cgit/aur.git/snapshot/"$1".tar.gz &&
-	sudo -u "$name" tar -xvf "$1".tar.gz &>/dev/null &&
-	cd "$1" &&
-	sudo -u "$name" makepkg --noconfirm -si &>/dev/null
-	cd /tmp || return) ;}
+# Installs $1 manually if not installed. Used only for AUR helper here.
+manualinstall() {
+  [[ -f /usr/bin/$1 ]] || (
+  dialog --infobox "Installing \"$1\", an AUR helper..." 4 50
+  cd /tmp || exit
+  rm -rf /tmp/"$1"*
+  curl -sO https://aur.archlinux.org/cgit/aur.git/snapshot/"$1".tar.gz &&
+    sudo -u "$name" tar -xvf "$1".tar.gz &>/dev/null &&
+    cd "$1" &&
+    sudo -u "$name" makepkg --noconfirm -si &>/dev/null
+  cd /tmp || return)
+}
 
-finalize(){ \
-	dialog --infobox "Preparing welcome message..." 4 50
-	echo "exec_always --no-startup-id notify-send -i ~/.scripts/pix/larbs.png '<b>Welcome to LARBS:</b> Press Super+F1 for the manual.' -t 10000"  >> "/home/$name/.config/i3/config"
-	dialog --title "All done!" --msgbox "Congrats! Provided there were no hidden errors, the script completed successfully and all the programs and configuration files should be in place.\\n\\nTo run the new graphical environment, log out and log back in as your new user, then run the command \"startx\" to start the graphical environment (it will start automatically in tty1).\\n\\n.t Luke" 12 80
+finalize(){
+  dialog --infobox "Preparing welcome message..." 4 50
+  echo "exec_always --no-startup-id notify-send -i ~/.scripts/pix/larbs.png '<b>Welcome to LARBS:</b> Press Super+F1 for the manual.' -t 10000"  >> "/home/$name/.config/i3/config"
+  dialog --title "All done!" --msgbox "Congrats! Provided there were no hidden errors, the script completed successfully and all the programs and configuration files should be in place.\\n\\nTo run the new graphical environment, log out and log back in as your new user, then run the command \"startx\" to start the graphical environment (it will start automatically in tty1).\\n\\n.t Luke" 12 80
 }
 
 ###
