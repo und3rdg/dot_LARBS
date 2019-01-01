@@ -19,14 +19,26 @@ while getopts ":a:r:p:h" o; do case "${o}" in
 	*) echo "-$OPTARG is not a valid option." && exit ;;
 esac done
 
+
 # DEFAULTS:
 [ -z ${dotfilesrepo+x} ] && dotfilesrepo="https://github.com/und3rdg/dot_base.git"
+
 [ -z ${vimfilesrepo+x} ] && vimfilesrepo="https://github.com/und3rdg/dot_vim.git"
+[ -z ${vimfilesdest+x} ] && vimfilesdest=".vim"
+
 [ -z ${zshfilesrepo+x} ] && zshfilesrepo="https://github.com/und3rdg/dot_shell.git"
+[ -z ${zshfilesdest+x} ] && zshfilesdest=".zprezto"
+
+
 [ -z ${i3filesrepo+x}  ] && i3filesrepo="https://github.com/und3rdg/dot_i3.git"
+[ -z ${i3filesdest+x}  ] && i3filesdest=".config/i3"
+
 [ -z ${wikifilesrepo+x}  ] && wikifilesrepo="https://github.com/und3rdg/dot_vimwiki.git"
+[ -z ${wikifilesdest+x}  ] && wikifilesdest="vimwiki"
+
 
 [ -z ${progsfile+x} ] && progsfile="https://raw.githubusercontent.com/und3rdg/dot_install/master/progs.csv"
+[ -z ${reposfile+x} ] && reposfile="https://raw.githubusercontent.com/und3rdg/dot_install/master/repos.csv"
 [ -z ${aurhelper+x} ] && aurhelper="yay"
 
 install_date=$(date +%Y_%m_%d-%H_%M_%S)
@@ -171,6 +183,14 @@ install_vim(){
   cd "/home/$name"
 }
 
+git_clone_loop() {
+	([ -f "$reposfile" ] && cp "$reposfile" /tmp/repos.csv) || curl -Ls "$reposfile" | sed '/^#/d' > /tmp/repos.csv
+	total=$(wc -l < /tmp/repos.csv)
+	while IFS=, read -r url dest; do
+    echo "$url" "$1/$dest"
+	done < /tmp/progs.csv 
+}
+
 resetpulse() { dialog --infobox "Reseting Pulseaudio..." 4 50
 	killall pulseaudio
 	sudo -n "$name" pulseaudio --start ;}
@@ -236,11 +256,15 @@ manualinstall $aurhelper
 installationloop
 
 # Install the dotfiles in the user's home directory
-putgitrepo "$dotfilesrepo" "/home/$name"
-git_clone "$vimfilesrepo" "/home/$name/.vim"
-git_clone "$zshfilesrepo" "/home/$name/.zprezto"
-git_clone "$i3filesrepo" "/home/$name/.config/i3"
-git_clone "$wikifilesrepo" "/home/$name/vimwiki"
+[ -z ${dotfilesdest+x} ] && dotfilesdest="/home/$name"
+
+putgitrepo "$dotfilesrepo" "$dotfilesdest"
+git_clone_loop "$dotfilesdest"
+
+# git_clone "$vimfilesrepo" "$dotfilesdest/$vimfilesdest"
+# git_clone "$zshfilesrepo" "$dotfilesdest/$zshfilesdest"
+# git_clone "$i3filesrepo" "$dotfilesdest/$i3filesdest"
+# git_clone "$wikifilesrepo" "$dotfilesdest/$wikifilesdest"
 
 # Install the LARBS Firefox profile in ~/.mozilla/firefox/
 # putgitrepo "https://github.com/LukeSmithxyz/mozillarbs.git" "/home/$name/.mozilla/firefox"
