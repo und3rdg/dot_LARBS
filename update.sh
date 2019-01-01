@@ -8,7 +8,7 @@ git_pull_loop() {
     echo "--------------------------------------------"
     echo "url"
     echo "--------------------------------------------"
-    git -c "~/$dest" pull
+    git -C "~/$dest" pull
 	done < /tmp/repos.csv 
 }
 
