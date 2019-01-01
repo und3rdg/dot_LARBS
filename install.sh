@@ -22,21 +22,6 @@ esac done
 
 # DEFAULTS:
 [ -z ${dotfilesrepo+x} ] && dotfilesrepo="https://github.com/und3rdg/dot_base.git"
-
-[ -z ${vimfilesrepo+x} ] && vimfilesrepo="https://github.com/und3rdg/dot_vim.git"
-[ -z ${vimfilesdest+x} ] && vimfilesdest=".vim"
-
-[ -z ${zshfilesrepo+x} ] && zshfilesrepo="https://github.com/und3rdg/dot_shell.git"
-[ -z ${zshfilesdest+x} ] && zshfilesdest=".zprezto"
-
-
-[ -z ${i3filesrepo+x}  ] && i3filesrepo="https://github.com/und3rdg/dot_i3.git"
-[ -z ${i3filesdest+x}  ] && i3filesdest=".config/i3"
-
-[ -z ${wikifilesrepo+x}  ] && wikifilesrepo="https://github.com/und3rdg/dot_vimwiki.git"
-[ -z ${wikifilesdest+x}  ] && wikifilesdest="vimwiki"
-
-
 [ -z ${progsfile+x} ] && progsfile="https://raw.githubusercontent.com/und3rdg/dot_install/master/progs.csv"
 [ -z ${reposfile+x} ] && reposfile="https://raw.githubusercontent.com/und3rdg/dot_install/master/repos.csv"
 [ -z ${aurhelper+x} ] && aurhelper="yay"
@@ -187,8 +172,10 @@ git_clone_loop() {
 	([ -f "$reposfile" ] && cp "$reposfile" /tmp/repos.csv) || curl -Ls "$reposfile" | sed '/^#/d' > /tmp/repos.csv
 	total=$(wc -l < /tmp/repos.csv)
 	while IFS=, read -r url dest; do
-    echo "$url" "$1/$dest"
-	done < /tmp/progs.csv 
+    git_clone "$url" "$1/$dest"
+
+    sleep 5
+	done < /tmp/repos.csv 
 }
 
 resetpulse() { dialog --infobox "Reseting Pulseaudio..." 4 50
