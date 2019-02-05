@@ -73,3 +73,4 @@ G,https://github.com/lukesmithxyz/st.git,"is my custom build of suckless's termi
 A,htop-vim-solarized-git,"htop with vim key bindings."
 ,qrencode,"C lib for displaying qrcode."
 ,ncmpcpp,"ncuser music player."
+,xorg-xprop,"dependencies of i3/scripts/i3cmd/samedir for opening new window in same dir"
